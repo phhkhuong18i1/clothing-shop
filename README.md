@@ -106,7 +106,7 @@ Không dùng `docker compose down -v` khi cập nhật. Nếu đổi cấu hình
 
 ## Bản demo trên Vercel
 
-Repo có cấu hình riêng `Dockerfile.vercel`, `Caddyfile` và `vercel.json` để chạy Laravel bằng FrankenPHP trên Vercel Container Runtime. Cách này chỉ dành cho demo: SQLite được migrate/seed sẵn trong image; thay đổi admin và ảnh tải lên không bền vững, có thể mất hoặc khác nhau giữa các instance. Sản phẩm demo dùng ảnh từ Unsplash. Không dùng SQLite/file local cho cửa hàng thật.
+Repo có cấu hình riêng `Dockerfile.vercel`, `Caddyfile` và `vercel.json` để chạy Laravel bằng FrankenPHP trên Vercel Container Runtime. Cách này chỉ dành cho demo: SQLite được migrate/seed sẵn trong image; thay đổi admin và ảnh tải lên không bền vững, có thể mất hoặc khác nhau giữa các instance. Sản phẩm demo dùng ảnh từ Unsplash. Image Vercel bật trusted proxy để Laravel tạo URL HTTPS đúng sau proxy TLS. Không dùng SQLite/file local cho cửa hàng thật.
 
 1. Push các file này lên GitHub cùng nhánh muốn deploy.
 2. Trong Vercel, chọn **Add New → Project**, import repository và giữ **Root Directory** là thư mục gốc dự án. Vercel nhận `vercel.json` và tự build `Dockerfile.vercel`.
@@ -138,7 +138,7 @@ Kiểm tra trạng thái dịch vụ bằng `docker compose ps`. Trước khi ch
 
 ## GitHub Actions CI/CD
 
-Workflow tại `.github/workflows/ci-cd.yml` tự chạy khi tạo pull request vào `main` hoặc đẩy commit lên `main`. CI kiểm tra `composer.json`/`composer.lock`, cú pháp PHP, build CSS/JavaScript và build Docker image production. Hiện dự án chưa có bộ kiểm thử tự động trong `tests/`, vì vậy workflow chưa chạy `php artisan test`.
+Workflow tại `.github/workflows/ci-cd.yml` tự chạy khi tạo pull request vào `main` hoặc đẩy commit lên `main`. CI kiểm tra `composer.json`/`composer.lock`, cú pháp PHP, build CSS/JavaScript và image Vercel; image VPS chỉ build khi bật deploy VPS. BuildKit lưu cache Docker giữa các lượt chạy để giảm thời gian build sau lượt đầu. Hiện dự án chưa có bộ kiểm thử tự động trong `tests/`, vì vậy workflow chưa chạy `php artisan test`.
 
 Sau khi CI thành công, job VPS chỉ deploy khi đặt Actions variable `VPS_DEPLOY_ENABLED=true`; nếu không đặt, chỉ CI chạy và Vercel Git integration có thể tự deploy bản demo. Khi bật, push lên `main` sẽ deploy VPS qua SSH. Job deploy cập nhật mã nguồn trên VPS, build lại image, chạy migration với `--force`, thay container app/Nginx và làm mới cache Laravel. Lần triển khai đầu cần chuẩn bị VPS trước:
 
