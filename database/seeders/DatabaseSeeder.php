@@ -69,13 +69,16 @@ class DatabaseSeeder extends Seeder
 
         foreach ($products as $productData) {
             $imageIds = $productData['images'];
+            $colors = $productData['colors'] ?? [];
             unset($productData['images']);
+            unset($productData['colors']);
             $categorySlug = $productData['category'];
             unset($productData['category']);
 
             $product = Product::updateOrCreate(['sku' => $productData['sku']], [
                 ...$productData,
                 'category_id' => $categories[$categorySlug]->id,
+                'colors' => null,
                 'stock_quantity' => 12,
                 'is_published' => true,
             ]);
@@ -86,6 +89,13 @@ class DatabaseSeeder extends Seeder
                     'alt_text' => $product->name.' — ảnh '.($index + 1),
                     'is_primary' => $index === 0,
                 ]);
+            }
+
+            foreach ($colors as $index => $color) {
+                $variant = $product->colorVariants()->firstOrNew(['sort_order' => $index]);
+                $variant->name = $color;
+                if (! $variant->exists) $variant->image_path = null;
+                $variant->save();
             }
         }
 

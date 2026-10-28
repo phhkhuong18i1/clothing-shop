@@ -8,45 +8,71 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-paper text-ink">
-    <div class="bg-ink px-4 py-2 text-center text-[10px] uppercase tracking-[.2em] text-white">Chọn lọc tinh giản · Mặc mỗi ngày</div>
+    <div class="bg-ink px-4 py-2 text-center text-[9px] font-medium uppercase tracking-[.18em] text-white sm:text-[10px]">Chọn lọc tinh giản <span class="mx-1 text-white/50">·</span> Mặc mỗi ngày</div>
     <header class="sticky top-0 z-40 border-b border-stone-200 bg-paper md:relative md:z-20" x-data="{ open: false }">
-        <div class="container-page grid h-[72px] grid-cols-3 items-center gap-3">
-            <div class="flex items-center gap-3">
-                <button type="button" class="grid h-10 w-10 place-items-center md:hidden" @click="open = !open" :aria-expanded="open" aria-label="Mở hoặc đóng điều hướng">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        <div class="container-page grid h-[68px] grid-cols-[1fr_auto_1fr] items-center gap-2 sm:h-[72px] sm:gap-4">
+            <div class="flex min-w-0 items-center">
+                <button type="button" class="grid h-10 w-10 place-items-center rounded-full transition-colors hover:bg-[#eeece6] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay lg:hidden" @click="open = !open" :aria-expanded="open" aria-controls="mobile-navigation" :aria-label="open ? 'Đóng điều hướng' : 'Mở điều hướng'">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path :d="open ? 'M6 6l12 12M18 6L6 18' : 'M3 6h18M3 12h18M3 18h18'"/></svg>
                 </button>
-                <p class="hidden text-[10px] uppercase tracking-[.18em] text-stone-500 lg:block">Mặc theo cách của bạn</p>
+                <a href="{{ route('search') }}" class="hidden items-center gap-2 text-[10px] font-medium uppercase tracking-[.14em] text-stone-600 transition-colors hover:text-clay focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-clay lg:inline-flex {{ request()->routeIs('search') ? 'text-clay' : '' }}" aria-label="Tìm kiếm sản phẩm" @if(request()->routeIs('search')) aria-current="page" @endif>
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>
+                    <span>Tìm kiếm</span>
+                </a>
             </div>
-            <a href="{{ route('home') }}" class="min-w-0 max-w-full justify-self-center truncate whitespace-nowrap font-display text-lg tracking-[.08em] sm:text-xl">{{ $storeSettings->shop_name }}</a>
-            <div class="justify-self-end"><a href="{{ route('products.index') }}" class="button-outline !hidden min-h-10 px-4 text-[10px] sm:!inline-flex sm:px-5">Khám phá</a></div>
+
+            <a href="{{ route('home') }}" class="max-w-[190px] truncate whitespace-nowrap justify-self-center font-display text-[17px] uppercase tracking-[.12em] text-ink transition-colors hover:text-clay sm:max-w-[280px] sm:text-xl md:text-[23px]">{{ $storeSettings->shop_name }}</a>
+
+            <div class="flex items-center justify-end gap-2 sm:gap-3">
+                <a href="{{ route('search') }}" class="grid h-10 w-10 place-items-center rounded-full transition-colors hover:bg-[#eeece6] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay lg:hidden {{ request()->routeIs('search') ? 'bg-[#eeece6] text-clay' : '' }}" aria-label="Tìm kiếm sản phẩm" @if(request()->routeIs('search')) aria-current="page" @endif>
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>
+                </a>
+                <a href="{{ route('products.index') }}" class="hidden min-h-10 items-center gap-3 border border-ink px-4 text-[10px] font-semibold uppercase tracking-[.14em] transition-colors hover:bg-ink hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink lg:inline-flex lg:px-5">Khám phá <span aria-hidden="true">↗</span></a>
+            </div>
         </div>
 
-        <nav class="container-page hidden min-h-12 flex-wrap items-center justify-center gap-x-7 border-t border-stone-200 md:flex lg:gap-x-9" aria-label="Điều hướng chính">
-            <a class="eyebrow py-4 transition-colors hover:text-clay" href="{{ route('products.index') }}">Tất cả sản phẩm</a>
+        <nav class="container-page hidden min-h-[48px] flex-wrap items-center justify-center gap-x-5 border-t border-stone-200 lg:flex lg:gap-x-8" aria-label="Điều hướng chính">
+            <a class="group relative py-4 text-[10px] font-medium uppercase tracking-[.15em] transition-colors hover:text-clay focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay {{ request()->routeIs('products.index') ? 'text-clay' : 'text-ink' }}" href="{{ route('products.index') }}" @if(request()->routeIs('products.index')) aria-current="page" @endif>Tất cả sản phẩm<span class="absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-clay transition-transform duration-200 group-hover:scale-x-100 {{ request()->routeIs('products.index') ? 'scale-x-100' : '' }}"></span></a>
             @foreach(($navCategories ?? collect()) as $navCategory)
                 <div class="group relative py-4">
-                    <a class="eyebrow inline-flex items-center gap-1 whitespace-nowrap transition-colors hover:text-clay" href="{{ route('categories.show', $navCategory) }}">{{ $navCategory->name }}@if($navCategory->children->isNotEmpty()) <svg class="h-3 w-3 shrink-0 translate-y-px" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>@endif</a>
+                    <a class="inline-flex items-center gap-1.5 whitespace-nowrap text-[10px] font-medium uppercase tracking-[.15em] text-ink transition-colors hover:text-clay focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay" href="{{ route('categories.show', $navCategory) }}" @if(request()->routeIs('categories.show') && request()->route('category')?->is($navCategory)) aria-current="page" @endif>{{ $navCategory->name }}@if($navCategory->children->isNotEmpty()) <svg class="h-3 w-3 shrink-0 transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>@endif</a>
                     @if($navCategory->children->isNotEmpty())
-                        <div class="invisible absolute left-0 top-full z-30 min-w-48 translate-y-1 rounded-md border border-stone-200 bg-paper p-2 opacity-0 shadow-sm transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
-                            @foreach($navCategory->children as $child)<a class="block rounded px-3 py-2.5 text-xs transition-colors hover:bg-[#eeece6]" href="{{ route('categories.show', $child) }}">{{ $child->name }}</a>@endforeach
+                        <div class="invisible absolute left-1/2 top-full z-40 w-56 -translate-x-1/2 translate-y-2 border border-stone-200 bg-paper p-3 opacity-0 shadow-lg shadow-ink/5 transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                            <p class="border-b border-stone-200 px-3 pb-3 text-[9px] font-semibold uppercase tracking-[.17em] text-stone-400">Khám phá {{ $navCategory->name }}</p>
+                            <div class="pt-1">
+                                @foreach($navCategory->children as $child)<a class="block px-3 py-2.5 text-xs text-stone-700 transition-colors hover:bg-[#eeece6] hover:text-clay focus-visible:outline focus-visible:outline-2 focus-visible:outline-clay" href="{{ route('categories.show', $child) }}">{{ $child->name }}</a>@endforeach
+                            </div>
                         </div>
                     @endif
                 </div>
             @endforeach
-            <a class="eyebrow py-4 font-semibold text-clay transition-colors hover:text-clay" href="{{ route('sale.index') }}">Sale</a>
-            <a class="eyebrow py-4 transition-colors hover:text-clay" href="{{ route('news.index') }}">Tin tức</a>
-            <a class="eyebrow py-4 transition-colors hover:text-clay" href="{{ route('about') }}">Giới thiệu</a>
+            <a class="group relative py-4 text-[10px] font-semibold uppercase tracking-[.15em] text-clay transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay" href="{{ route('sale.index') }}" @if(request()->routeIs('sale.*')) aria-current="page" @endif>Sale<span class="absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-clay transition-transform duration-200 group-hover:scale-x-100 {{ request()->routeIs('sale.*') ? 'scale-x-100' : '' }}"></span></a>
+            <a class="group relative py-4 text-[10px] font-medium uppercase tracking-[.15em] text-ink transition-colors hover:text-clay focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay {{ request()->routeIs('news.*') ? 'text-clay' : '' }}" href="{{ route('news.index') }}" @if(request()->routeIs('news.*')) aria-current="page" @endif>Tin tức<span class="absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-clay transition-transform duration-200 group-hover:scale-x-100 {{ request()->routeIs('news.*') ? 'scale-x-100' : '' }}"></span></a>
+            <a class="group relative py-4 text-[10px] font-medium uppercase tracking-[.15em] text-ink transition-colors hover:text-clay focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clay {{ request()->routeIs('about') ? 'text-clay' : '' }}" href="{{ route('about') }}" @if(request()->routeIs('about')) aria-current="page" @endif>Giới thiệu<span class="absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-clay transition-transform duration-200 group-hover:scale-x-100 {{ request()->routeIs('about') ? 'scale-x-100' : '' }}"></span></a>
         </nav>
 
-        <nav x-cloak x-show="open" x-transition.opacity class="max-h-[calc(100vh-110px)] space-y-4 overflow-y-auto border-t border-stone-200 bg-paper px-5 py-5 md:hidden" aria-label="Điều hướng di động">
-            <a class="block eyebrow" href="{{ route('products.index') }}">Tất cả sản phẩm</a>
+        <nav id="mobile-navigation" x-cloak x-show="open" x-transition.opacity class="max-h-[calc(100dvh-4.25rem)] overflow-y-auto border-t border-stone-200 bg-paper px-5 pb-6 pt-3 lg:hidden" aria-label="Điều hướng di động">
+            <a class="flex min-h-12 items-center justify-between border-b border-stone-200 text-[11px] font-semibold uppercase tracking-[.14em] text-ink transition-colors hover:text-clay" href="{{ route('products.index') }}" @click="open = false">Tất cả sản phẩm <span aria-hidden="true">↗</span></a>
             @foreach(($navCategories ?? collect()) as $navCategory)
-                <a class="block eyebrow" href="{{ route('categories.show', $navCategory) }}">{{ $navCategory->name }}</a>
-                @foreach($navCategory->children as $child)<a class="block pl-4 text-sm text-stone-600" href="{{ route('categories.show', $child) }}">↳ {{ $child->name }}</a>@endforeach
+                <div class="border-b border-stone-200" @if($navCategory->children->isNotEmpty()) x-data="{ expanded: false }" @endif>
+                    <div class="flex min-h-12 items-center justify-between gap-3">
+                        <a class="flex min-h-12 flex-1 items-center text-[11px] font-semibold uppercase tracking-[.14em] text-ink transition-colors hover:text-clay" href="{{ route('categories.show', $navCategory) }}" @click="open = false">{{ $navCategory->name }}</a>
+                        @if($navCategory->children->isNotEmpty())
+                            <button type="button" class="grid h-10 w-10 place-items-center rounded-full text-stone-500 transition-colors hover:bg-[#eeece6] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-clay" @click="expanded = !expanded" :aria-expanded="expanded" aria-label="Mở danh mục con {{ $navCategory->name }}">
+                                <svg class="h-4 w-4 transition-transform duration-200" :class="expanded ? 'rotate-180' : ''" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m3 6 5 5 5-5"/></svg>
+                            </button>
+                        @endif
+                    </div>
+                    @if($navCategory->children->isNotEmpty())
+                        <div x-cloak x-show="expanded" x-transition class="pb-3 pl-3">
+                            @foreach($navCategory->children as $child)<a class="flex min-h-10 items-center border-l border-stone-300 pl-4 text-sm text-stone-600 transition-colors hover:border-clay hover:text-clay" href="{{ route('categories.show', $child) }}" @click="open = false">{{ $child->name }}</a>@endforeach
+                        </div>
+                    @endif
+                </div>
             @endforeach
-            <a class="block eyebrow text-clay" href="{{ route('sale.index') }}">Sale</a>
-            <a class="block eyebrow" href="{{ route('news.index') }}">Tin tức</a>
-            <a class="block eyebrow" href="{{ route('about') }}">Giới thiệu</a>
+            <a class="flex min-h-12 items-center border-b border-stone-200 text-[11px] font-semibold uppercase tracking-[.14em] text-clay transition-colors hover:text-ink" href="{{ route('sale.index') }}" @click="open = false">Sale</a>
+            <a class="flex min-h-12 items-center border-b border-stone-200 text-[11px] font-semibold uppercase tracking-[.14em] text-ink transition-colors hover:text-clay" href="{{ route('news.index') }}" @click="open = false">Tin tức & cảm hứng</a>
+            <a class="flex min-h-12 items-center text-[11px] font-semibold uppercase tracking-[.14em] text-ink transition-colors hover:text-clay" href="{{ route('about') }}" @click="open = false">Giới thiệu</a>
         </nav>
     </header>
 
