@@ -54,10 +54,17 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build image production
-        run: docker buildx build --target production --tag atelier-clothing-store:ci --load .
+        if: vars.VPS_DEPLOY_ENABLED == 'true'
+        run: >-
+          docker buildx build --target production --tag atelier-clothing-store:ci --load
+          --cache-from type=gha,scope=production
+          --cache-to type=gha,scope=production,mode=max .
 
       - name: Build image demo Vercel
-        run: docker buildx build --file Dockerfile.vercel --tag atelier-clothing-store:vercel-ci --load .
+        run: >-
+          docker buildx build --file Dockerfile.vercel --tag atelier-clothing-store:vercel-ci --load
+          --cache-from type=gha,scope=vercel-demo
+          --cache-to type=gha,scope=vercel-demo,mode=max .
 
   deploy:
     name: Deploy VPS
