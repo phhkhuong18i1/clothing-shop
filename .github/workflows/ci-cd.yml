@@ -1,0 +1,105 @@
+name: CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: clothing-shop-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  ci:
+    name: Kiểm tra và build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lấy mã nguồn
+        uses: actions/checkout@v4
+
+      - name: Cài PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: ctype, curl, dom, fileinfo, gd, mbstring, openssl, pdo, pdo_mysql, tokenizer, xml, zip
+          coverage: none
+
+      - name: Kiểm tra Composer
+        run: composer validate --strict
+
+      - name: Kiểm tra cú pháp PHP
+        shell: bash
+        run: |
+          while IFS= read -r -d '' file; do
+            php -l "$file"
+          done < <(find app bootstrap config database routes -type f -name '*.php' -print0)
+
+      - name: Cài Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Build giao diện
+        run: |
+          npm ci
+          npm run build
+
+      - name: Thiết lập Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image production
+        run: docker buildx build --target production --tag atelier-clothing-store:ci --load .
+
+      - name: Build image demo Vercel
+        run: docker buildx build --file Dockerfile.vercel --tag atelier-clothing-store:vercel-ci --load .
+
+  deploy:
+    name: Deploy VPS
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.VPS_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Chuẩn bị SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
+          VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          set -Eeuo pipefail
+          : "${VPS_HOST:?Thiếu secret VPS_HOST}"
+          : "${VPS_USER:?Thiếu secret VPS_USER}"
+          : "${VPS_DEPLOY_PATH:?Thiếu secret VPS_DEPLOY_PATH}"
+          : "${VPS_SSH_PRIVATE_KEY:?Thiếu secret VPS_SSH_PRIVATE_KEY}"
+          : "${VPS_KNOWN_HOSTS:?Thiếu secret VPS_KNOWN_HOSTS}"
+          [[ "$VPS_DEPLOY_PATH" =~ ^/[a-zA-Z0-9._/-]+$ ]] || { echo 'VPS_DEPLOY_PATH phải là đường dẫn tuyệt đối, không chứa khoảng trắng.'; exit 1; }
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$VPS_SSH_PRIVATE_KEY" > "$HOME/.ssh/deploy_key"
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/deploy_key" "$HOME/.ssh/known_hosts"
+
+      - name: Cập nhật ứng dụng trên VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
+        run: |
+          set -Eeuo pipefail
+          ssh -F /dev/null -o BatchMode=yes -o IdentitiesOnly=yes -i "$HOME/.ssh/deploy_key" "$VPS_USER@$VPS_HOST" "bash -s -- '$VPS_DEPLOY_PATH'" <<'REMOTE'
+          set -Eeuo pipefail
+          cd "$1"
+          git fetch --prune origin main
+          git merge --ff-only origin/main
+          docker compose build --pull app nginx
+          docker compose run --rm app php artisan migrate --force
+          docker compose up -d --remove-orphans app nginx
+          docker compose exec -T app php artisan optimize
+          REMOTE
