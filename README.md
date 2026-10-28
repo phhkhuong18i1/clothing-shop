@@ -111,7 +111,8 @@ Repo có cấu hình riêng `Dockerfile.vercel`, `Caddyfile` và `vercel.json` �
 1. Push các file này lên GitHub cùng nhánh muốn deploy.
 2. Trong Vercel, chọn **Add New → Project**, import repository và giữ **Root Directory** là thư mục gốc dự án. Vercel nhận `vercel.json` và tự build `Dockerfile.vercel`.
 3. Trong **Project Settings → Environment Variables**, thêm `APP_KEY` riêng cho demo, `APP_ENV=production`, `APP_DEBUG=false`. Tạo key bằng `docker compose -f compose.yaml -f compose.dev.yaml exec -T app php artisan key:generate --show` rồi lưu kết quả nguyên dạng `base64:...` làm `APP_KEY`.
-4. Deploy Production từ `main`. Các commit mới trên branch production sẽ tự tạo deployment; pull request/branch khác có thể tạo Preview Deployment.
+4. Bản demo không có sẵn tài khoản admin. Nếu cần thử admin, thêm `ADMIN_EMAIL` và `ADMIN_PASSWORD` (tối thiểu 12 ký tự) trong Environment Variables; có thể thêm `ADMIN_NAME`, nếu bỏ trống tên là “Quản trị viên”. Entrypoint chạy `AdminUserSeeder` trước khi mở server, seeder không đổi mật khẩu của tài khoản đã tồn tại. Tạo mật khẩu riêng cho demo và không dùng tài khoản thật.
+5. Deploy Production từ `main`. Các commit mới trên branch production sẽ tự tạo deployment; pull request/branch khác có thể tạo Preview Deployment.
 
 Không cần cấu hình MySQL cho bản demo này; database mẫu được tạo lúc build. Không thêm `DB_*`, `FILESYSTEM_DISK` hoặc `APP_KEY` local của VPS vào project. Vì file system và SQLite trên Vercel không bền vững, trang quản trị không phù hợp để nhập dữ liệu thật. Muốn demo cả CRUD/upload có lưu lâu dài thì cần chuyển database sang dịch vụ MySQL bên ngoài và ảnh sang object storage trước.
 
