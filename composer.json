@@ -2,6 +2,7 @@
     "name": "atelier/clothing-store",
     "type": "project",
     "description": "Editorial fashion storefront and product administration built with Laravel.",
+    "license": "proprietary",
     "require": {
         "php": "^8.2",
         "laravel/framework": "^11.0|^12.0",

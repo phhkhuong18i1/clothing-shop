@@ -104,6 +104,17 @@ docker compose exec app php artisan migrate --force
 
 Không dùng `docker compose down -v` khi cập nhật. Nếu đổi cấu hình môi trường, xóa hoặc tạo lại cache Laravel phù hợp. Không commit `.env` hoặc bản sao lưu.
 
+## Bản demo trên Vercel
+
+Repo có cấu hình riêng `Dockerfile.vercel`, `Caddyfile` và `vercel.json` để chạy Laravel bằng FrankenPHP trên Vercel Container Runtime. Cách này chỉ dành cho demo: SQLite được migrate/seed sẵn trong image; thay đổi admin và ảnh tải lên không bền vững, có thể mất hoặc khác nhau giữa các instance. Sản phẩm demo dùng ảnh từ Unsplash. Không dùng SQLite/file local cho cửa hàng thật.
+
+1. Push các file này lên GitHub cùng nhánh muốn deploy.
+2. Trong Vercel, chọn **Add New → Project**, import repository và giữ **Root Directory** là thư mục gốc dự án. Vercel nhận `vercel.json` và tự build `Dockerfile.vercel`.
+3. Trong **Project Settings → Environment Variables**, thêm `APP_KEY` riêng cho demo, `APP_ENV=production`, `APP_DEBUG=false`. Tạo key bằng `docker compose -f compose.yaml -f compose.dev.yaml exec -T app php artisan key:generate --show` rồi lưu kết quả nguyên dạng `base64:...` làm `APP_KEY`.
+4. Deploy Production từ `main`. Các commit mới trên branch production sẽ tự tạo deployment; pull request/branch khác có thể tạo Preview Deployment.
+
+Không cần cấu hình MySQL cho bản demo này; database mẫu được tạo lúc build. Không thêm `DB_*`, `FILESYSTEM_DISK` hoặc `APP_KEY` local của VPS vào project. Vì file system và SQLite trên Vercel không bền vững, trang quản trị không phù hợp để nhập dữ liệu thật. Muốn demo cả CRUD/upload có lưu lâu dài thì cần chuyển database sang dịch vụ MySQL bên ngoài và ảnh sang object storage trước.
+
 ## Ảnh sản phẩm và dữ liệu demo
 
 Seeder tạo sẵn danh mục tiếng Việt, sản phẩm mới, sản phẩm bán chạy và gallery nhiều ảnh cho từng sản phẩm. Ảnh demo được tải từ Unsplash CDN nên cần kết nối Internet; hãy thay bằng ảnh sản phẩm mà cửa hàng có quyền sử dụng trước khi triển khai thật. Ảnh do quản trị viên tải lên chấp nhận JPEG, PNG hoặc WebP, tối đa 5 MB mỗi ảnh và tối đa sáu ảnh cho một sản phẩm. Tên tệp được tạo an toàn và ảnh được lưu trên Laravel public disk trong volume `storage_data`.
@@ -124,3 +135,25 @@ npm run build
 ```
 
 Kiểm tra trạng thái dịch vụ bằng `docker compose ps`. Trước khi chạy migration production, hãy kiểm tra `.env` và sao lưu dữ liệu.
+
+## GitHub Actions CI/CD
+
+Workflow tại `.github/workflows/ci-cd.yml` tự chạy khi tạo pull request vào `main` hoặc đẩy commit lên `main`. CI kiểm tra `composer.json`/`composer.lock`, cú pháp PHP, build CSS/JavaScript và build Docker image production. Hiện dự án chưa có bộ kiểm thử tự động trong `tests/`, vì vậy workflow chưa chạy `php artisan test`.
+
+Sau khi CI thành công, job VPS chỉ deploy khi đặt Actions variable `VPS_DEPLOY_ENABLED=true`; nếu không đặt, chỉ CI chạy và Vercel Git integration có thể tự deploy bản demo. Khi bật, push lên `main` sẽ deploy VPS qua SSH. Job deploy cập nhật mã nguồn trên VPS, build lại image, chạy migration với `--force`, thay container app/Nginx và làm mới cache Laravel. Lần triển khai đầu cần chuẩn bị VPS trước:
+
+1. Cài Git, Docker Engine và Docker Compose plugin; tạo thư mục ứng dụng, ví dụ `/opt/atelier-clothing-store`.
+2. Clone repository vào thư mục đó trên nhánh `main`. Nếu repository private, cấu hình deploy key chỉ đọc để VPS fetch từ GitHub.
+3. Tạo `.env` production theo hướng dẫn **Triển khai lên VPS** phía trên. Không đặt `.env` trong GitHub Secrets và không commit tệp này.
+4. Trong GitHub, mở **Settings → Environments**, tạo environment `production`. Có thể thêm required reviewers để duyệt trước mỗi lần deploy.
+5. Thêm các repository/environment secrets sau:
+
+| Secret | Giá trị |
+| --- | --- |
+| `VPS_HOST` | IP hoặc hostname VPS |
+| `VPS_USER` | Tài khoản SSH có quyền chạy Docker Compose trong thư mục ứng dụng |
+| `VPS_DEPLOY_PATH` | Đường dẫn tuyệt đối repository trên VPS, ví dụ `/opt/atelier-clothing-store` |
+| `VPS_SSH_PRIVATE_KEY` | Khóa riêng SSH dùng bởi GitHub Actions để đăng nhập VPS; nên tạo khóa riêng cho deploy |
+| `VPS_KNOWN_HOSTS` | Dòng host key đã xác minh của VPS, lấy và xác minh fingerprint trước khi lưu |
+
+Job deploy chỉ chạy khi push vào `main`, không chạy trên pull request. Có thể chạy CI thủ công bằng **Actions → CI/CD → Run workflow**; thao tác thủ công chỉ kiểm tra/build, không deploy. Mỗi lần deploy có chạy migration production nên hãy giữ migration tương thích với phiên bản đang chạy và sao lưu dữ liệu theo quy trình vận hành.
