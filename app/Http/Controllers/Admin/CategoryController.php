@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class CategoryController extends Controller
@@ -19,6 +20,8 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $data = $this->validated($request);
+        if ($request->hasFile('image')) $data['image_path'] = $request->file('image')->store('categories', 'public');
+        unset($data['image'], $data['remove_image']);
         Category::create([...$data, 'slug' => $this->uniqueSlug($data['name'])]);
         return redirect()->route('admin.categories.index')->with('status', 'Đã tạo danh mục.');
     }
@@ -26,19 +29,37 @@ class CategoryController extends Controller
     public function update(Request $request, Category $category)
     {
         $data = $this->validated($request, $category);
+        $oldImage = $category->image_path;
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $request->file('image')->store('categories', 'public');
+        } elseif ($request->boolean('remove_image')) {
+            $data['image_path'] = null;
+        }
+        unset($data['image'], $data['remove_image']);
         $category->update([...$data, 'slug' => $this->uniqueSlug($data['name'], $category->id)]);
+        if ($oldImage && $oldImage !== $category->image_path && ! Str::startsWith($oldImage, ['https://', 'http://'])) {
+            Storage::disk('public')->delete($oldImage);
+        }
         return redirect()->route('admin.categories.index')->with('status', 'Đã cập nhật danh mục.');
     }
     public function destroy(Category $category)
     {
         if ($category->products()->exists()) return back()->withErrors(['category' => 'Hãy chuyển hoặc xóa sản phẩm trong danh mục này trước khi xóa danh mục.']);
         if ($category->children()->exists()) return back()->withErrors(['category' => 'Hãy chuyển các danh mục con sang danh mục cha khác trước khi xóa danh mục.']);
+        $imagePath = $category->image_path;
         $category->delete();
+        if ($imagePath && ! Str::startsWith($imagePath, ['https://', 'http://'])) Storage::disk('public')->delete($imagePath);
         return redirect()->route('admin.categories.index')->with('status', 'Đã xóa danh mục.');
     }
     private function validated(Request $request, ?Category $category = null): array
     {
-        $data = $request->validate(['name' => ['required', 'string', 'max:120'], 'description' => ['nullable', 'string', 'max:2000'], 'parent_id' => ['nullable', 'integer', 'exists:categories,id']]);
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'parent_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'remove_image' => ['nullable', 'boolean'],
+        ]);
         if (! empty($data['parent_id'])) {
             $parent = Category::findOrFail($data['parent_id']);
             if ($parent->parent_id !== null || $parent->is($category)) {

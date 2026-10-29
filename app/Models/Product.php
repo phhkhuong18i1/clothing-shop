@@ -40,6 +40,11 @@ class Product extends Model
     {
         return $this->hasMany(ProductColorVariant::class)->orderBy('sort_order');
     }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(CustomerReview::class);
+    }
     
     public function primaryImage(): HasMany
     {

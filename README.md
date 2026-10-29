@@ -118,7 +118,7 @@ Không cần cấu hình MySQL cho bản demo này; database mẫu được tạ
 
 ## Ảnh sản phẩm và dữ liệu demo
 
-Seeder tạo sẵn danh mục tiếng Việt, sản phẩm mới, sản phẩm bán chạy và gallery nhiều ảnh cho từng sản phẩm. Ảnh demo được tải từ Unsplash CDN nên cần kết nối Internet; hãy thay bằng ảnh sản phẩm mà cửa hàng có quyền sử dụng trước khi triển khai thật. Ảnh do quản trị viên tải lên chấp nhận JPEG, PNG hoặc WebP, tối đa 5 MB mỗi ảnh và tối đa sáu ảnh cho một sản phẩm. Tên tệp được tạo an toàn và ảnh được lưu trên Laravel public disk trong volume `storage_data`.
+`DatabaseSeeder` tạo 6 sản phẩm giới thiệu hiện có và gọi `FashionCatalogSeeder` để thêm 100 sản phẩm demo, các danh mục con và gallery nhiều ảnh. Dữ liệu là nội dung mẫu được Việt hóa cho Atelier, ảnh tham khảo lấy từ bộ dữ liệu thử nghiệm DummyJSON và Unsplash CDN; cần Internet để ảnh ngoài tải được. Chạy riêng catalog demo bằng `docker compose -f compose.yaml -f compose.dev.yaml exec app php artisan db:seed --class=FashionCatalogSeeder`. Hãy thay ảnh demo bằng ảnh cửa hàng có quyền sử dụng trước khi triển khai thật. Ảnh do quản trị viên tải lên chấp nhận JPEG, PNG hoặc WebP, tối đa 5 MB mỗi ảnh và tối đa sáu ảnh cho một sản phẩm. Tên tệp được tạo an toàn và ảnh được lưu trên Laravel public disk trong volume `storage_data`.
 
 Danh mục con được tạo/sửa trong **Quản trị → Danh mục** bằng trường “Danh mục cha”. Chỉ danh mục gốc có thể được chọn làm cha, nên cấu trúc hiện tại hỗ trợ hai cấp và tránh vòng lặp. Giá ưu đãi của sản phẩm thấp hơn giá gốc sẽ tự động đưa sản phẩm vào trang Sale. Bài viết được quản lý trong **Quản trị → Tin tức**; chỉ bài đã đăng và tới ngày đăng mới xuất hiện công khai. Ảnh bìa tin tức chấp nhận JPEG, PNG hoặc WebP, tối đa 5 MB.
 
