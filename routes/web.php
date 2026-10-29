@@ -11,6 +11,7 @@ use App\Http\Controllers\StorefrontController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [StorefrontController::class, 'home'])->name('home');
+Route::get('/search', [StorefrontController::class, 'search'])->name('search');
 Route::get('/products', [StorefrontController::class, 'index'])->name('products.index');
 Route::get('/products/{product:slug}', [StorefrontController::class, 'show'])->name('products.show');
 Route::get('/categories/{category:slug}', [StorefrontController::class, 'category'])->name('categories.show');

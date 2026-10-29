@@ -19,9 +19,9 @@ class StorefrontController extends Controller
                 ->whereNull('parent_id')
                 ->where(fn ($q) => $q->whereHas('products', fn ($products) => $products->where('is_published', true))->orWhereHas('children.products', fn ($products) => $products->where('is_published', true)))
                 ->withCount(['products' => fn ($q) => $q->where('is_published', true)])->orderBy('name')->get(),
-            'featured' => Product::with(['category', 'images'])->where('is_published', true)->where('is_featured', true)->latest()->take(4)->get(),
-            'newArrivals' => Product::with(['category', 'images'])->where('is_published', true)->latest()->take(4)->get(),
-            'bestSellers' => Product::with(['category', 'images'])->where('is_published', true)->where('is_best_seller', true)->latest()->take(4)->get(),
+            'featured' => Product::with(['category', 'images', 'colorVariants'])->where('is_published', true)->where('is_featured', true)->latest()->take(4)->get(),
+            'newArrivals' => Product::with(['category', 'images', 'colorVariants'])->where('is_published', true)->latest()->take(4)->get(),
+            'bestSellers' => Product::with(['category', 'images', 'colorVariants'])->where('is_published', true)->where('is_best_seller', true)->latest()->take(4)->get(),
             'saleProducts' => $this->saleQuery()->take(4)->get(),
             'latestNews' => NewsArticle::published()->latest('published_at')->take(3)->get(),
         ]);
@@ -39,7 +39,7 @@ class StorefrontController extends Controller
             if (is_numeric($min) && is_numeric($max) && (float) $max < (float) $min) $validator->errors()->add('max_price', 'The maximum price must be at least the minimum price.');
         });
         $filters = $validator->validate();
-        $products = Product::with(['category', 'images'])->where('is_published', true)
+        $products = Product::with(['category', 'images', 'colorVariants'])->where('is_published', true)
             ->when($filters['q'] ?? null, fn ($q, $term) => $q->where('name', 'like', '%'.$term.'%'))
             ->when($filters['category'] ?? null, function ($query, $id): void {
                 $category = Category::with('children')->findOrFail($id);
@@ -61,10 +61,29 @@ class StorefrontController extends Controller
         ]);
     }
 
+    public function search(Request $request)
+    {
+        $validated = $request->validate(['q' => ['nullable', 'string', 'max:100']]);
+        $term = trim($validated['q'] ?? '');
+        $products = Product::with(['category', 'images', 'colorVariants'])
+            ->where('is_published', true)
+            ->when($term === '', fn ($query) => $query->whereRaw('1 = 0'))
+            ->when($term !== '', fn ($query) => $query->where(function ($matches) use ($term): void {
+                $matches->where('name', 'like', '%'.$term.'%')
+                    ->orWhere('sku', 'like', '%'.$term.'%')
+                    ->orWhere('description', 'like', '%'.$term.'%');
+            }))
+            ->latest()
+            ->paginate(12)
+            ->withQueryString();
+
+        return view('storefront.search', compact('products', 'term'));
+    }
+
     public function category(Category $category)
     {
         $categoryIds = $category->children()->whereHas('products', fn ($query) => $query->where('is_published', true))->pluck('id')->push($category->id);
-        $products = Product::with(['category', 'images'])->whereIn('category_id', $categoryIds)->where('is_published', true)->latest()->paginate(12);
+        $products = Product::with(['category', 'images', 'colorVariants'])->whereIn('category_id', $categoryIds)->where('is_published', true)->latest()->paginate(12);
         abort_if($products->total() === 0, 404);
         $category->load(['children' => fn ($query) => $query->whereHas('products', fn ($products) => $products->where('is_published', true))]);
         return view('storefront.index', [
@@ -79,8 +98,8 @@ class StorefrontController extends Controller
     public function show(Product $product)
     {
         abort_unless($product->is_published, 404);
-        $product->load(['category', 'images']);
-        $related = Product::with(['category', 'images'])->where('is_published', true)->where('category_id', $product->category_id)->whereKeyNot($product->id)->latest()->take(4)->get();
+        $product->load(['category', 'images', 'colorVariants']);
+        $related = Product::with(['category', 'images', 'colorVariants'])->where('is_published', true)->where('category_id', $product->category_id)->whereKeyNot($product->id)->latest()->take(4)->get();
         return view('storefront.show', compact('product', 'related'));
     }
 
@@ -110,6 +129,6 @@ class StorefrontController extends Controller
 
     private function saleQuery()
     {
-        return Product::with(['category', 'images'])->where('is_published', true)->whereNotNull('sale_price')->whereColumn('sale_price', '<', 'price')->latest();
+        return Product::with(['category', 'images', 'colorVariants'])->where('is_published', true)->whereNotNull('sale_price')->whereColumn('sale_price', '<', 'price')->latest();
     }
 }

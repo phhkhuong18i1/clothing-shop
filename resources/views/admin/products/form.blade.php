@@ -41,16 +41,48 @@
                 <input class="form-control mt-2" name="sizes" placeholder="XS, S, M, L" value="{{ old('sizes', implode(', ', $product->sizes ?? [])) }}">
                 <span class="mt-1 block text-xs text-stone-500">Ngăn cách các kích cỡ bằng dấu phẩy.</span>
             </label>
-            <label class="block">
-                <span class="eyebrow">Màu sắc</span>
-                <input class="form-control mt-2" name="colors" placeholder="Trắng ngà, Nâu đất" value="{{ old('colors', implode(', ', $product->colors ?? [])) }}">
-                <span class="mt-1 block text-xs text-stone-500">Ngăn cách các màu bằng dấu phẩy.</span>
-            </label>
             <label class="block sm:col-span-2"><span class="eyebrow">Mô tả</span><textarea class="form-control mt-2" rows="5" name="description" maxlength="10000">{{ old('description', $product->description) }}</textarea></label>
         </div></section>
+        @php
+            $storedColorVariants = $product->colorVariants;
+            $colorVariantRows = old('color_variants');
+            if ($colorVariantRows === null) {
+                $colorVariantRows = $storedColorVariants->mapWithKeys(fn ($variant) => [$variant->id => ['id' => $variant->id, 'name' => $variant->name]])->all();
+            }
+        @endphp
+        <section class="border border-stone-300 bg-white p-5 sm:p-7" data-color-variants>
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div><h2 class="font-display text-2xl">Màu sắc</h2><p class="mt-2 max-w-2xl text-sm leading-6 text-stone-600">Mỗi màu có ảnh riêng để khách chọn. Phần hình ảnh sản phẩm bên dưới vẫn là gallery các góc chụp.</p></div>
+                <button type="button" class="button-outline min-h-10" data-add-color-variant>+ Thêm màu</button>
+            </div>
+            <div class="mt-5 space-y-4" data-color-variant-list>
+                @foreach($colorVariantRows as $key => $variantData)
+                    @php($storedVariant = isset($variantData['id']) ? $storedColorVariants->firstWhere('id', (int) $variantData['id']) : null)
+                    <div class="grid gap-4 border border-stone-200 p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end" data-color-variant-row>
+                        @if($storedVariant)<input type="hidden" name="color_variants[{{ $key }}][id]" value="{{ $storedVariant->id }}">@endif
+                        <label class="block"><span class="eyebrow">Tên màu *</span><input class="form-control mt-2" name="color_variants[{{ $key }}][name]" maxlength="80" required value="{{ $variantData['name'] ?? '' }}" placeholder="Ví dụ: Trắng ngà">@if($errors->has("color_variants.$key.name"))<span class="mt-1 block text-xs text-red-700">{{ $errors->first("color_variants.$key.name") }}</span>@endif</label>
+                        <label class="block"><span class="eyebrow">Ảnh đại diện màu {{ $storedVariant && $storedVariant->image_path ? '' : '*' }}</span>
+                            @if($storedVariant && $storedVariant->image_url)<img class="mb-2 mt-2 h-20 w-16 border border-stone-200 object-cover" data-color-variant-preview src="{{ $storedVariant->image_url }}" alt="Ảnh màu {{ $storedVariant->name }}">@else<img class="mb-2 mt-2 hidden h-20 w-16 border border-stone-200 object-cover" data-color-variant-preview alt="">@endif
+                            <input class="form-control mt-2" type="file" name="color_variants[{{ $key }}][image]" accept="image/jpeg,image/png,image/webp" data-color-variant-image @if(!$storedVariant || !$storedVariant->image_path) required @endif>
+                            <span class="mt-1 block text-xs text-stone-500">JPEG, PNG hoặc WebP · tối đa 5 MB.</span>
+                            @if($errors->has("color_variants.$key.image"))<span class="mt-1 block text-xs text-red-700">{{ $errors->first("color_variants.$key.image") }}</span>@endif
+                        </label>
+                        <button type="button" class="button-outline min-h-10 border-red-200 text-red-700 hover:bg-red-50" data-remove-color-variant>Xóa màu</button>
+                    </div>
+                @endforeach
+            </div>
+            @error('color_variants')<p class="mt-3 text-sm text-red-700">{{ $message }}</p>@enderror
+        </section>
+        <template id="color-variant-template">
+            <div class="grid gap-4 border border-stone-200 p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end" data-color-variant-row>
+                <label class="block"><span class="eyebrow">Tên màu *</span><input class="form-control mt-2" name="color_variants[__KEY__][name]" maxlength="80" required placeholder="Ví dụ: Trắng ngà"></label>
+                <label class="block"><span class="eyebrow">Ảnh đại diện màu *</span><img class="mb-2 mt-2 hidden h-20 w-16 border border-stone-200 object-cover" data-color-variant-preview alt=""><input class="form-control mt-2" type="file" name="color_variants[__KEY__][image]" accept="image/jpeg,image/png,image/webp" data-color-variant-image required><span class="mt-1 block text-xs text-stone-500">JPEG, PNG hoặc WebP · tối đa 5 MB.</span></label>
+                <button type="button" class="button-outline min-h-10 border-red-200 text-red-700 hover:bg-red-50" data-remove-color-variant>Xóa màu</button>
+            </div>
+        </template>
         <section class="border border-stone-300 bg-white p-5 sm:p-7">
             <h2 class="font-display text-2xl">Hình ảnh sản phẩm</h2>
-            <p class="mt-2 text-sm text-stone-600">Tải tối đa sáu ảnh JPEG, PNG hoặc WebP. Mỗi ảnh tối đa 5 MB.</p>
+            <p class="mt-2 text-sm text-stone-600">Tải tối đa sáu ảnh JPEG, PNG hoặc WebP. Mỗi ảnh tối đa 5 MB. Các ảnh này là gallery riêng, không dùng làm ảnh chọn màu.</p>
             @if($product->exists && $product->images->isNotEmpty())
                 <div class="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
                     @foreach($product->images as $image)
