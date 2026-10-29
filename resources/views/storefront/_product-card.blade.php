@@ -1,11 +1,13 @@
 @php($isOnSale = $product->sale_price && (float) $product->sale_price < (float) $product->price)
+@php($representativeImage = $product->images->firstWhere('is_primary', true) ?: $product->images->first())
 <article class="group min-w-0" data-product-visual>
     <a href="{{ route('products.show', $product) }}" class="block rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink" aria-label="Xem {{ $product->name }}">
         <div class="relative aspect-[4/5] overflow-hidden rounded-md bg-[#e8e4dc]">
-            @if($product->colorVariants->first()?->image_url || $product->images->first())
-                <img data-product-main data-fallback-image class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.035]" src="{{ $product->colorVariants->first()?->image_url ?: $product->images->first()->url }}" alt="{{ $product->colorVariants->first()?->image_url ? $product->name.' — '.$product->colorVariants->first()->name : ($product->images->first()->alt_text ?: $product->name) }}" loading="lazy">
+            @if($representativeImage)
+                <img data-product-main data-fallback-image class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.035]" src="{{ $representativeImage->url }}" alt="{{ $representativeImage->alt_text ?: $product->name }}" loading="lazy">
             @else
-                <div class="grid h-full place-items-center"><span class="font-display text-3xl text-stone-400">{{ $storeSettings->shop_name }}</span></div>
+                @if($product->colorVariants->isNotEmpty())<img data-product-main data-fallback-image class="h-full w-full object-cover" alt="{{ $product->name }}" hidden>@endif
+                <div data-product-placeholder class="grid h-full place-items-center"><span class="font-display text-3xl text-stone-400">{{ $storeSettings->shop_name }}</span></div>
             @endif
 
             <div class="absolute left-3 top-3 flex max-w-[calc(100%-1.5rem)] flex-wrap gap-1.5 sm:left-4 sm:top-4 sm:gap-2">
@@ -20,10 +22,21 @@
         </div>
     </a>
 
-    <div class="pt-4">
-        <p class="eyebrow">{{ $product->category->name }}</p>
-        <h3 class="mt-2 line-clamp-2 min-h-11 font-display text-base leading-snug text-ink transition-colors group-hover:text-clay sm:text-lg"><a href="{{ route('products.show', $product) }}" class="rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">{{ $product->name }}</a></h3>
-        <div class="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+    @if($product->colorVariants->isNotEmpty())
+        <div class="mt-2 flex min-h-9 items-center gap-2" data-color-selector role="group" aria-label="Chọn màu cho {{ $product->name }}">
+            <div class="flex items-center gap-1.5">
+                @foreach($product->colorVariants as $variant)
+                    <button type="button" data-product-color data-src="{{ $variant->image_url }}" data-alt="{{ $product->name }} — {{ $variant->name }}" data-color="{{ $variant->name }}" aria-label="Chọn màu {{ $variant->name }}" aria-pressed="false" title="{{ $variant->name }}" class="grid h-9 w-8 cursor-pointer place-items-center overflow-hidden rounded-sm border border-stone-300 bg-white p-0.5 transition-colors hover:border-clay focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink aria-pressed:border-clay aria-pressed:ring-1 aria-pressed:ring-clay/30">
+                        @if($variant->image_url)<img data-fallback-image class="h-full w-full object-cover" src="{{ $variant->image_url }}" alt="" loading="lazy">@else<span class="px-0.5 text-center text-[7px] leading-tight text-stone-500">{{ $variant->name }}</span>@endif
+                    </button>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    <div class="pt-2">
+        <h3 class="mt-1 min-h-10 line-clamp-2 font-display text-base leading-snug text-ink transition-colors group-hover:text-clay sm:text-lg"><a href="{{ route('products.show', $product) }}" class="rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">{{ $product->name }}</a></h3>
+        <div class="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1">
             @if($isOnSale)
                 <span class="text-sm font-semibold text-clay sm:text-base">{{ number_format((float) $product->sale_price, 0, ',', '.') }}₫</span>
                 <span class="text-xs text-stone-400 line-through">{{ number_format((float) $product->price, 0, ',', '.') }}₫</span>
@@ -33,17 +46,5 @@
             @endif
         </div>
 
-        @if($product->colorVariants->isNotEmpty())
-            <div class="mt-3 flex min-h-11 items-center gap-2" data-color-selector aria-label="Chọn màu cho {{ $product->name }}">
-                <div class="flex gap-1.5">
-                    @foreach($product->colorVariants as $variant)
-                        <button type="button" data-product-color data-src="{{ $variant->image_url }}" data-alt="{{ $product->name }} — {{ $variant->name }}" data-color="{{ $variant->name }}" aria-label="Chọn màu {{ $variant->name }}" aria-pressed="{{ $loop->first ? 'true' : 'false' }}" title="{{ $variant->name }}" class="grid h-11 w-9 cursor-pointer place-items-center overflow-hidden border border-transparent bg-stone-100 p-0.5 transition-colors hover:border-stone-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink aria-pressed:border-ink">
-                            @if($variant->image_url)<img data-fallback-image class="h-full w-full object-cover" src="{{ $variant->image_url }}" alt="" loading="lazy">@else<span class="px-0.5 text-center text-[7px] leading-tight text-stone-500">{{ $variant->name }}</span>@endif
-                            </button>
-                    @endforeach
-                </div>
-                <span class="truncate text-[10px] text-stone-600" data-selected-color>{{ $product->colorVariants->first()->name }}</span>
-            </div>
-        @endif
     </div>
 </article>

@@ -67,11 +67,16 @@ document.addEventListener('click', (event) => {
         if (mainImage && colorOption.dataset.src) {
             mainImage.src = colorOption.dataset.src;
             mainImage.alt = colorOption.dataset.alt;
+            mainImage.hidden = false;
+            mainImage.classList.remove('hidden');
+            const placeholder = visual.querySelector('[data-product-placeholder]');
+            if (placeholder) placeholder.classList.add('hidden');
         }
         const selector = colorOption.closest('[data-color-selector]');
         selector?.querySelectorAll('[data-product-color]').forEach((button) => {
             button.setAttribute('aria-pressed', String(button === colorOption));
         });
+        visual?.querySelectorAll('[data-gallery-thumb]').forEach((button) => button.setAttribute('aria-pressed', 'false'));
         const selectedColor = selector?.querySelector('[data-selected-color]');
         if (selectedColor) selectedColor.textContent = colorOption.dataset.color;
         return;
@@ -85,6 +90,10 @@ document.addEventListener('click', (event) => {
     mainImage.src = thumbnail.dataset.src;
     mainImage.alt = thumbnail.dataset.alt;
     gallery.querySelectorAll('[data-gallery-thumb]').forEach((button) => button.setAttribute('aria-pressed', String(button === thumbnail)));
+    const selector = gallery.closest('[data-product-visual]')?.querySelector('[data-color-selector]');
+    selector?.querySelectorAll('[data-product-color]').forEach((button) => button.setAttribute('aria-pressed', 'false'));
+    const selectedColor = selector?.querySelector('[data-selected-color]');
+    if (selectedColor) selectedColor.textContent = 'Chọn màu';
 });
 
 document.addEventListener('error', (event) => {
