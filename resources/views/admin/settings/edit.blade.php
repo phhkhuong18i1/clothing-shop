@@ -2,9 +2,19 @@
 @section('title', 'Cài đặt cửa hàng')
 @section('content')
 <div class="mb-8"><p class="eyebrow">Thông tin storefront</p><h1 class="mt-2 font-display text-4xl">Cài đặt cửa hàng</h1><p class="mt-2 text-sm text-stone-600">Các thông tin này xuất hiện ở chân trang và nút liên hệ nhanh.</p></div>
-<form method="POST" action="{{ route('admin.settings.update') }}" class="max-w-3xl rounded-md border border-stone-300 bg-white p-5 sm:p-8">@csrf @method('PUT')
+<form method="POST" enctype="multipart/form-data" action="{{ route('admin.settings.update') }}" class="max-w-3xl rounded-md border border-stone-300 bg-white p-5 sm:p-8">@csrf @method('PUT')
     <h2 class="font-display text-2xl">Thông tin cửa hàng</h2><div class="mt-6 grid gap-5 sm:grid-cols-2">
         <label class="sm:col-span-2"><span class="eyebrow">Tên shop *</span><input class="form-control mt-2" name="shop_name" required maxlength="120" value="{{ old('shop_name', $settings->shop_name) }}" placeholder="Tên hiển thị trên cửa hàng"></label>
+        <div class="sm:col-span-2">
+            <label class="block"><span class="eyebrow">Logo cửa hàng</span><input class="form-control mt-2" type="file" name="logo" accept="image/jpeg,image/png,image/webp"><span class="mt-2 block text-xs text-stone-500">JPEG, PNG hoặc WebP · tối đa 5 MB. Logo sẽ hiển thị cạnh tên shop.</span></label>
+            @error('logo')<p class="mt-2 text-xs text-red-700">{{ $message }}</p>@enderror
+            @if($settings->logo_url)
+                <div class="mt-4 flex items-center gap-4 rounded-md border border-stone-200 p-3">
+                    <img src="{{ $settings->logo_url }}" alt="Logo {{ $settings->shop_name }} hiện tại" class="h-16 w-16 rounded-md border border-stone-200 bg-white object-contain p-1">
+                    <label class="flex items-center gap-2 text-sm text-stone-600"><input type="checkbox" name="remove_logo" value="1" class="rounded border-stone-400 text-ink focus:ring-clay"> Xóa logo hiện tại</label>
+                </div>
+            @endif
+        </div>
         <label><span class="eyebrow">Số điện thoại</span><input class="form-control mt-2" name="phone" maxlength="40" value="{{ old('phone', $settings->phone) }}" placeholder="+84 ..."></label>
         <label><span class="eyebrow">Email</span><input class="form-control mt-2" type="email" name="email" maxlength="180" value="{{ old('email', $settings->email) }}" placeholder="hello@example.com"></label>
         <label class="sm:col-span-2"><span class="eyebrow">Địa chỉ</span><input class="form-control mt-2" name="address" maxlength="255" value="{{ old('address', $settings->address) }}"></label>

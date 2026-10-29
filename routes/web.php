@@ -7,6 +7,8 @@ use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\NewsArticleController as AdminNewsArticleController;
 use App\Http\Controllers\Admin\StoreSlideController as AdminStoreSlideController;
 use App\Http\Controllers\Admin\StoreSettingController as AdminStoreSettingController;
+use App\Http\Controllers\Admin\CustomerReviewController as AdminCustomerReviewController;
+use App\Http\Controllers\CustomerReviewController;
 use App\Http\Controllers\StorefrontController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +16,7 @@ Route::get('/', [StorefrontController::class, 'home'])->name('home');
 Route::get('/search', [StorefrontController::class, 'search'])->name('search');
 Route::get('/products', [StorefrontController::class, 'index'])->name('products.index');
 Route::get('/products/{product:slug}', [StorefrontController::class, 'show'])->name('products.show');
+Route::post('/products/{product:slug}/reviews', [CustomerReviewController::class, 'store'])->middleware('throttle:5,1')->name('products.reviews.store');
 Route::get('/categories/{category:slug}', [StorefrontController::class, 'category'])->name('categories.show');
 Route::get('/sale', [StorefrontController::class, 'sale'])->name('sale.index');
 Route::get('/gioi-thieu', [StorefrontController::class, 'about'])->name('about');
@@ -33,6 +36,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/products/{product}/images/{image}', [AdminProductController::class, 'destroyImage'])->name('products.images.destroy');
         Route::resource('categories', AdminCategoryController::class)->except(['show']);
         Route::resource('news', AdminNewsArticleController::class)->except(['show']);
+        Route::get('/reviews', [AdminCustomerReviewController::class, 'index'])->name('reviews.index');
+        Route::patch('/reviews/{review}', [AdminCustomerReviewController::class, 'update'])->name('reviews.update');
+        Route::delete('/reviews/{review}', [AdminCustomerReviewController::class, 'destroy'])->name('reviews.destroy');
         Route::resource('sliders', AdminStoreSlideController::class)->except(['show']);
         Route::get('/settings', [AdminStoreSettingController::class, 'edit'])->name('settings.edit');
         Route::put('/settings', [AdminStoreSettingController::class, 'update'])->name('settings.update');

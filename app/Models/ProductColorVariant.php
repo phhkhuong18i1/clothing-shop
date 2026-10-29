@@ -9,11 +9,11 @@ use Illuminate\Support\Str;
 
 class ProductColorVariant extends Model
 {
-    protected $fillable = ['product_id', 'name', 'image_path', 'sort_order'];
+    protected $fillable = ['product_id', 'name', 'color_hex', 'image_path', 'sort_order', 'show_on_home'];
 
     protected function casts(): array
     {
-        return ['sort_order' => 'integer'];
+        return ['sort_order' => 'integer', 'show_on_home' => 'boolean'];
     }
 
     public function getImageUrlAttribute(): ?string

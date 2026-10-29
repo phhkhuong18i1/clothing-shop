@@ -19,7 +19,9 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Đồ dệt kim', 'slug' => 'knitwear', 'description' => 'Lớp áo mềm mại cho những ngày dịu mát.'],
             ['name' => 'Phụ kiện', 'slug' => 'accessories', 'description' => 'Điểm chạm cuối cùng cho bộ trang phục.'],
         ])->mapWithKeys(function (array $data): array {
-            $category = Category::updateOrCreate(['slug' => $data['slug']], $data);
+            $category = Category::query()->where('name', $data['name'])->orderBy('id')->first()
+                ?? Category::firstOrCreate(['slug' => $data['slug']], $data);
+            $category->update(['name' => $data['name'], 'description' => $data['description']]);
 
             return [$data['slug'] => $category];
         });
@@ -120,6 +122,8 @@ class DatabaseSeeder extends Seeder
                 'link_url' => null, 'sort_order' => $index, 'is_active' => true,
             ]);
         }
+
+        $this->call(FashionCatalogSeeder::class);
         StoreSetting::firstOrCreate(['id' => 1], StoreSetting::defaults());
     }
 }

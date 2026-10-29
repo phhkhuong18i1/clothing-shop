@@ -47,7 +47,7 @@
             $storedColorVariants = $product->colorVariants;
             $colorVariantRows = old('color_variants');
             if ($colorVariantRows === null) {
-                $colorVariantRows = $storedColorVariants->mapWithKeys(fn ($variant) => [$variant->id => ['id' => $variant->id, 'name' => $variant->name]])->all();
+                $colorVariantRows = $storedColorVariants->mapWithKeys(fn ($variant) => [$variant->id => ['id' => $variant->id, 'name' => $variant->name, 'color_hex' => $variant->color_hex ?: '#b8b0a4', 'show_on_home' => $variant->show_on_home]])->all();
             }
         @endphp
         <section class="border border-stone-300 bg-white p-5 sm:p-7" data-color-variants>
@@ -60,14 +60,14 @@
                     @php($storedVariant = isset($variantData['id']) ? $storedColorVariants->firstWhere('id', (int) $variantData['id']) : null)
                     <div class="grid gap-4 border border-stone-200 p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end" data-color-variant-row>
                         @if($storedVariant)<input type="hidden" name="color_variants[{{ $key }}][id]" value="{{ $storedVariant->id }}">@endif
-                        <label class="block"><span class="eyebrow">Tên màu *</span><input class="form-control mt-2" name="color_variants[{{ $key }}][name]" maxlength="80" required value="{{ $variantData['name'] ?? '' }}" placeholder="Ví dụ: Trắng ngà">@if($errors->has("color_variants.$key.name"))<span class="mt-1 block text-xs text-red-700">{{ $errors->first("color_variants.$key.name") }}</span>@endif</label>
+                        <div><label class="block"><span class="eyebrow">Tên màu *</span><input class="form-control mt-2" name="color_variants[{{ $key }}][name]" maxlength="80" required value="{{ old("color_variants.$key.name", $variantData['name'] ?? '') }}" placeholder="Ví dụ: Nâu đất">@if($errors->has("color_variants.$key.name"))<span class="mt-1 block text-xs text-red-700">{{ $errors->first("color_variants.$key.name") }}</span>@endif</label><label class="mt-3 block"><span class="eyebrow">Chọn màu *</span><span class="mt-2 flex min-h-12 items-center gap-3 rounded-md border border-stone-300 px-3"><input class="h-8 w-10 cursor-pointer rounded border-0 bg-transparent p-0" type="color" name="color_variants[{{ $key }}][color_hex]" value="{{ old("color_variants.$key.color_hex", $variantData['color_hex'] ?? '#b8b0a4') }}" required data-color-input><span class="font-mono text-xs text-stone-600" data-color-value>{{ old("color_variants.$key.color_hex", $variantData['color_hex'] ?? '#b8b0a4') }}</span></span>@if($errors->has("color_variants.$key.color_hex"))<span class="mt-1 block text-xs text-red-700">{{ $errors->first("color_variants.$key.color_hex") }}</span>@endif</label><label class="mt-3 flex items-start gap-2 text-xs text-stone-600"><input type="hidden" name="color_variants[{{ $key }}][show_on_home]" value="0"><input class="mt-0.5 rounded border-stone-400 text-ink focus:ring-clay" type="checkbox" name="color_variants[{{ $key }}][show_on_home]" value="1" @checked(old("color_variants.$key.show_on_home", $variantData['show_on_home'] ?? true))><span>Hiện lựa chọn màu này trên trang chủ</span></label></div>
                         <label class="block"><span class="eyebrow">Ảnh đại diện màu {{ $storedVariant && $storedVariant->image_path ? '' : '*' }}</span>
                             @if($storedVariant && $storedVariant->image_url)<img class="mb-2 mt-2 h-20 w-16 border border-stone-200 object-cover" data-color-variant-preview src="{{ $storedVariant->image_url }}" alt="Ảnh màu {{ $storedVariant->name }}">@else<img class="mb-2 mt-2 hidden h-20 w-16 border border-stone-200 object-cover" data-color-variant-preview alt="">@endif
                             <input class="form-control mt-2" type="file" name="color_variants[{{ $key }}][image]" accept="image/jpeg,image/png,image/webp" data-color-variant-image @if(!$storedVariant || !$storedVariant->image_path) required @endif>
                             <span class="mt-1 block text-xs text-stone-500">JPEG, PNG hoặc WebP · tối đa 5 MB.</span>
                             @if($errors->has("color_variants.$key.image"))<span class="mt-1 block text-xs text-red-700">{{ $errors->first("color_variants.$key.image") }}</span>@endif
                         </label>
-                        <button type="button" class="button-outline min-h-10 border-red-200 text-red-700 hover:bg-red-50" data-remove-color-variant>Xóa màu</button>
+                        <button type="button" class="button-outline min-h-10" data-remove-color-variant>Xóa màu</button>
                     </div>
                 @endforeach
             </div>
@@ -75,9 +75,9 @@
         </section>
         <template id="color-variant-template">
             <div class="grid gap-4 border border-stone-200 p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end" data-color-variant-row>
-                <label class="block"><span class="eyebrow">Tên màu *</span><input class="form-control mt-2" name="color_variants[__KEY__][name]" maxlength="80" required placeholder="Ví dụ: Trắng ngà"></label>
+                <div><label class="block"><span class="eyebrow">Tên màu *</span><input class="form-control mt-2" name="color_variants[__KEY__][name]" maxlength="80" required placeholder="Ví dụ: Nâu đất"></label><label class="mt-3 block"><span class="eyebrow">Chọn màu *</span><span class="mt-2 flex min-h-12 items-center gap-3 rounded-md border border-stone-300 px-3"><input class="h-8 w-10 cursor-pointer rounded border-0 bg-transparent p-0" type="color" name="color_variants[__KEY__][color_hex]" value="#b8b0a4" required data-color-input><span class="font-mono text-xs text-stone-600" data-color-value>#b8b0a4</span></span></label><label class="mt-3 flex items-start gap-2 text-xs text-stone-600"><input type="hidden" name="color_variants[__KEY__][show_on_home]" value="0"><input class="mt-0.5 rounded border-stone-400 text-ink focus:ring-clay" type="checkbox" name="color_variants[__KEY__][show_on_home]" value="1" checked><span>Hiện lựa chọn màu này trên trang chủ</span></label></div>
                 <label class="block"><span class="eyebrow">Ảnh đại diện màu *</span><img class="mb-2 mt-2 hidden h-20 w-16 border border-stone-200 object-cover" data-color-variant-preview alt=""><input class="form-control mt-2" type="file" name="color_variants[__KEY__][image]" accept="image/jpeg,image/png,image/webp" data-color-variant-image required><span class="mt-1 block text-xs text-stone-500">JPEG, PNG hoặc WebP · tối đa 5 MB.</span></label>
-                <button type="button" class="button-outline min-h-10 border-red-200 text-red-700 hover:bg-red-50" data-remove-color-variant>Xóa màu</button>
+                <button type="button" class="button-outline min-h-10" data-remove-color-variant>Xóa màu</button>
             </div>
         </template>
         <section class="border border-stone-300 bg-white p-5 sm:p-7">

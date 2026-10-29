@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\CustomerReview;
 use App\Models\NewsArticle;
 use App\Models\Product;
 use App\Models\StoreSlide;
@@ -19,11 +20,12 @@ class StorefrontController extends Controller
                 ->whereNull('parent_id')
                 ->where(fn ($q) => $q->whereHas('products', fn ($products) => $products->where('is_published', true))->orWhereHas('children.products', fn ($products) => $products->where('is_published', true)))
                 ->withCount(['products' => fn ($q) => $q->where('is_published', true)])->orderBy('name')->get(),
-            'featured' => Product::with(['category', 'images', 'colorVariants'])->where('is_published', true)->where('is_featured', true)->latest()->take(4)->get(),
+            'featured' => Product::with(['category', 'images', 'colorVariants'])->where('is_published', true)->where('is_featured', true)->latest()->take(3)->get(),
             'newArrivals' => Product::with(['category', 'images', 'colorVariants'])->where('is_published', true)->latest()->take(4)->get(),
             'bestSellers' => Product::with(['category', 'images', 'colorVariants'])->where('is_published', true)->where('is_best_seller', true)->latest()->take(4)->get(),
             'saleProducts' => $this->saleQuery()->take(4)->get(),
             'latestNews' => NewsArticle::published()->latest('published_at')->take(3)->get(),
+            'homeReviews' => CustomerReview::published()->with('product')->latest()->take(3)->get(),
         ]);
     }
 
@@ -99,8 +101,9 @@ class StorefrontController extends Controller
     {
         abort_unless($product->is_published, 404);
         $product->load(['category', 'images', 'colorVariants']);
+        $reviews = $product->reviews()->published()->latest()->paginate(5, ['*'], 'reviews_page');
         $related = Product::with(['category', 'images', 'colorVariants'])->where('is_published', true)->where('category_id', $product->category_id)->whereKeyNot($product->id)->latest()->take(4)->get();
-        return view('storefront.show', compact('product', 'related'));
+        return view('storefront.show', compact('product', 'related', 'reviews'));
     }
 
     public function sale()

@@ -3,10 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class StoreSetting extends Model
 {
-    protected $fillable = ['shop_name', 'phone', 'email', 'address', 'instagram_url', 'zalo_url', 'messenger_url', 'badge_featured', 'badge_best_seller', 'badge_sale'];
+    protected $fillable = ['shop_name', 'logo_path', 'phone', 'email', 'address', 'instagram_url', 'zalo_url', 'messenger_url', 'badge_featured', 'badge_best_seller', 'badge_sale'];
+
+    public function getLogoUrlAttribute(): ?string
+    {
+        return $this->logo_path ? Storage::disk('public')->url($this->logo_path) : null;
+    }
 
     public static function defaults(): array
     {

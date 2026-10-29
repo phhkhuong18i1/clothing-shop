@@ -43,6 +43,7 @@ class AppServiceProvider extends ServiceProvider
             'attributes.description' => 'mô tả',
             'attributes.email' => 'email',
             'attributes.images' => 'hình ảnh',
+            'attributes.logo' => 'logo cửa hàng',
             'attributes.max_price' => 'giá cao nhất',
             'attributes.min_price' => 'giá thấp nhất',
             'attributes.price' => 'giá bán',

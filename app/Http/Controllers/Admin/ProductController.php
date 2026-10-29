@@ -147,7 +147,9 @@ class ProductController extends Controller
             'color_variants' => ['nullable', 'array', 'max:12'],
             'color_variants.*.id' => ['nullable', 'integer', 'distinct'],
             'color_variants.*.name' => ['required', 'string', 'max:80'],
+            'color_variants.*.color_hex' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'color_variants.*.image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'color_variants.*.show_on_home' => ['nullable', 'boolean'],
             'primary_choice' => ['nullable', 'regex:/^(existing:\\d+|new:\\d+)$/'],
             'remove_images' => ['nullable', 'array'], 'remove_images.*' => ['integer'],
         ]);
@@ -200,9 +202,9 @@ class ProductController extends Controller
                 $variant = $existing->get($id);
                 abort_unless($variant, 422);
                 if ($path && $variant->image_path) $removedPaths[] = $variant->image_path;
-                $variant->update(['name' => $row['name'], 'image_path' => $path ?: $variant->image_path, 'sort_order' => $sortOrder++]);
+                $variant->update(['name' => $row['name'], 'color_hex' => $row['color_hex'], 'image_path' => $path ?: $variant->image_path, 'show_on_home' => (bool) ($row['show_on_home'] ?? false), 'sort_order' => $sortOrder++]);
             } else {
-                $variant = $product->colorVariants()->create(['name' => $row['name'], 'image_path' => $path, 'sort_order' => $sortOrder++]);
+                $variant = $product->colorVariants()->create(['name' => $row['name'], 'color_hex' => $row['color_hex'], 'image_path' => $path, 'show_on_home' => (bool) ($row['show_on_home'] ?? false), 'sort_order' => $sortOrder++]);
             }
             $kept[] = $variant->id;
         }
